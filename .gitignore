@@ -1,0 +1,4 @@
+plugins/memory-lancedb-pro/config.json
+.memory-lancedb-pro/
+.DS_Store
+node_modules/

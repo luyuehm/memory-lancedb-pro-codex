@@ -1,0 +1,47 @@
+{
+  "name": "memory-lancedb-pro",
+  "version": "1.1.0-codex.1",
+  "description": "Codex wrapper for the OpenClaw LanceDB Pro long-term memory engine.",
+  "author": {
+    "name": "win4r",
+    "email": "win4r@outlook.com",
+    "url": "https://github.com/win4r"
+  },
+  "homepage": "https://github.com/win4r/memory-lancedb-pro",
+  "repository": "https://github.com/win4r/memory-lancedb-pro",
+  "license": "MIT",
+  "keywords": [
+    "memory",
+    "lancedb",
+    "codex-plugin",
+    "mcp",
+    "long-term-memory",
+    "openclaw-adapter"
+  ],
+  "skills": "./skills/",
+  "mcpServers": "./.mcp.json",
+  "interface": {
+    "displayName": "Memory LanceDB Pro",
+    "shortDescription": "Persistent long-term memory for Codex",
+    "longDescription": "Adapts the OpenClaw memory-lancedb-pro engine into a Codex MCP plugin with persistent LanceDB storage, hybrid retrieval, and explicit project scopes.",
+    "developerName": "win4r",
+    "category": "Productivity",
+    "capabilities": [
+      "Interactive",
+      "Read",
+      "Write"
+    ],
+    "websiteURL": "https://github.com/win4r/memory-lancedb-pro",
+    "privacyPolicyURL": "https://docs.github.com/en/site-policy/privacy-policies/github-general-privacy-statement",
+    "termsOfServiceURL": "https://docs.github.com/en/site-policy/github-terms/github-terms-of-service",
+    "defaultPrompt": [
+      "Recall prior decisions for this repo before starting the fix.",
+      "Store the key lesson from this debugging session as durable memory.",
+      "Show long-term memory stats and recent project-scoped entries."
+    ],
+    "brandColor": "#0F766E",
+    "composerIcon": "./assets/memory-lancedb-pro-small.svg",
+    "logo": "./assets/memory-lancedb-pro-large.svg",
+    "screenshots": []
+  }
+}

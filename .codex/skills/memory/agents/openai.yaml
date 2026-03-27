@@ -1,0 +1,4 @@
+interface:
+  display_name: "Memory"
+  short_description: "Recall and store long-term memory for this repo"
+  default_prompt: "Use $memory to recall prior work, store durable fixes, and keep repo-specific context across Codex sessions."

@@ -1,0 +1,28 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "outDir": "../dist-codex/runtime",
+    "rootDir": "..",
+    "declaration": false,
+    "sourceMap": false,
+    "strict": false,
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "skipLibCheck": true,
+    "resolveJsonModule": true,
+    "noEmitOnError": false
+  },
+  "include": [
+    "./runtime-adapter.ts"
+  ],
+  "exclude": [
+    "../index.ts",
+    "../cli.ts",
+    "../test/**",
+    "../examples/**",
+    "../docs/**",
+    "../skills/**"
+  ]
+}
