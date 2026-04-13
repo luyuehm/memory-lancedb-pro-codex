@@ -24,6 +24,11 @@ import {
   stringifySmartMetadata,
 } from "./smart-metadata.js";
 import { TEMPORAL_VERSIONED_CATEGORIES } from "./memory-categories.js";
+import {
+  filterUserMdExclusiveRecallResults,
+  isUserMdExclusiveMemory,
+  type WorkspaceBoundaryConfig,
+} from "./workspace-boundary.js";
 import { appendSelfImprovementEntry, ensureSelfImprovementLearningFiles } from "./self-improvement-files.js";
 import { getDisplayCategoryTag } from "./reflection-metadata.js";
 
@@ -60,6 +65,7 @@ interface ToolContext {
   workspaceDir?: string;
   mdMirror?: MdMirrorWriter | null;
   admissionControl?: AdmissionControlConfig;
+  workspaceBoundary?: WorkspaceBoundaryConfig;
   onMemoryStoreWrite?: (entry: {
     sessionKey: string;
     text: string;
@@ -605,6 +611,23 @@ export function registerMemoryStoreTool(
                 error: "scope_access_denied",
                 requestedScope: targetScope,
               },
+            };
+          }
+
+          if (
+            isUserMdExclusiveMemory(
+              { text, memoryCategory: category },
+              runtimeContext.workspaceBoundary,
+            )
+          ) {
+            return {
+              content: [
+                {
+                  type: "text",
+                  text: "Skipped: memory_store text is reserved for workspace-managed USER.md facts",
+                },
+              ],
+              details: { action: "user_md_exclusive_skipped", text: text.slice(0, 60) },
             };
           }
 
