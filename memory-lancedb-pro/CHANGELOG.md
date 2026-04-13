@@ -1,5 +1,21 @@
 # Changelog
 
+## 1.1.0-beta.9 (Codex Sync: scopes, boundary, OAuth)
+
+This is a **beta** release published under the npm dist-tag **`beta`** (it does not affect the stable `latest` channel).
+
+Highlights:
+- **Fix**: align session-key parsing and reserved bypass handling in the scope manager
+- **Feat**: add USER.md boundary filtering for recall/store and smart-extractor canonical fact routing
+- **Feat**: add atomic brand-item preference slot guards to avoid incorrect preference merges
+- **Feat**: add OAuth-backed smart-extraction LLM client support alongside the existing api-key path
+- **Feat**: add `CLAWTEAM_MEMORY_SCOPE` expansion support for team/shared scope access
+
+Notes:
+- This codex beta sync intentionally ports focused runtime capabilities first, without pulling in the full standalone release train all at once
+
+---
+
 ## 1.1.0-beta.2 (Smart Memory Beta + Access Reinforcement)
 
 This is a **beta** release published under the npm dist-tag **`beta`** (it does not affect the stable `latest` channel).

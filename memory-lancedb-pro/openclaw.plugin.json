@@ -2,7 +2,7 @@
   "id": "memory-lancedb-pro",
   "name": "Memory (LanceDB Pro)",
   "description": "Enhanced LanceDB-backed long-term memory with hybrid retrieval, multi-scope isolation, long-context chunking, and management CLI",
-  "version": "1.1.0-beta.8",
+  "version": "1.1.0-beta.9",
   "kind": "memory",
   "configSchema": {
     "type": "object",
@@ -200,23 +200,78 @@
             "type": "object",
             "additionalProperties": false,
             "properties": {
-              "utility": { "type": "number", "minimum": 0, "maximum": 1, "default": 0.1 },
-              "confidence": { "type": "number", "minimum": 0, "maximum": 1, "default": 0.1 },
-              "novelty": { "type": "number", "minimum": 0, "maximum": 1, "default": 0.1 },
-              "recency": { "type": "number", "minimum": 0, "maximum": 1, "default": 0.1 },
-              "typePrior": { "type": "number", "minimum": 0, "maximum": 1, "default": 0.6 }
+              "utility": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 1,
+                "default": 0.1
+              },
+              "confidence": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 1,
+                "default": 0.1
+              },
+              "novelty": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 1,
+                "default": 0.1
+              },
+              "recency": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 1,
+                "default": 0.1
+              },
+              "typePrior": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 1,
+                "default": 0.6
+              }
             }
           },
           "typePriors": {
             "type": "object",
             "additionalProperties": false,
             "properties": {
-              "profile": { "type": "number", "minimum": 0, "maximum": 1, "default": 0.95 },
-              "preferences": { "type": "number", "minimum": 0, "maximum": 1, "default": 0.9 },
-              "entities": { "type": "number", "minimum": 0, "maximum": 1, "default": 0.75 },
-              "events": { "type": "number", "minimum": 0, "maximum": 1, "default": 0.45 },
-              "cases": { "type": "number", "minimum": 0, "maximum": 1, "default": 0.8 },
-              "patterns": { "type": "number", "minimum": 0, "maximum": 1, "default": 0.85 }
+              "profile": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 1,
+                "default": 0.95
+              },
+              "preferences": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 1,
+                "default": 0.9
+              },
+              "entities": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 1,
+                "default": 0.75
+              },
+              "events": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 1,
+                "default": 0.45
+              },
+              "cases": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 1,
+                "default": 0.8
+              },
+              "patterns": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 1,
+                "default": 0.85
+              }
             }
           }
         }
@@ -351,32 +406,132 @@
         "type": "object",
         "additionalProperties": false,
         "properties": {
-          "recencyHalfLifeDays": { "type": "number", "minimum": 1, "maximum": 365, "default": 30 },
-          "recencyWeight": { "type": "number", "minimum": 0, "maximum": 1, "default": 0.4 },
-          "frequencyWeight": { "type": "number", "minimum": 0, "maximum": 1, "default": 0.3 },
-          "intrinsicWeight": { "type": "number", "minimum": 0, "maximum": 1, "default": 0.3 },
-          "staleThreshold": { "type": "number", "minimum": 0, "maximum": 1, "default": 0.3 },
-          "searchBoostMin": { "type": "number", "minimum": 0, "maximum": 1, "default": 0.3 },
-          "importanceModulation": { "type": "number", "minimum": 0, "maximum": 10, "default": 1.5 },
-          "betaCore": { "type": "number", "minimum": 0.1, "maximum": 5, "default": 0.8 },
-          "betaWorking": { "type": "number", "minimum": 0.1, "maximum": 5, "default": 1.0 },
-          "betaPeripheral": { "type": "number", "minimum": 0.1, "maximum": 5, "default": 1.3 },
-          "coreDecayFloor": { "type": "number", "minimum": 0, "maximum": 1, "default": 0.9 },
-          "workingDecayFloor": { "type": "number", "minimum": 0, "maximum": 1, "default": 0.7 },
-          "peripheralDecayFloor": { "type": "number", "minimum": 0, "maximum": 1, "default": 0.5 }
+          "recencyHalfLifeDays": {
+            "type": "number",
+            "minimum": 1,
+            "maximum": 365,
+            "default": 30
+          },
+          "recencyWeight": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1,
+            "default": 0.4
+          },
+          "frequencyWeight": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1,
+            "default": 0.3
+          },
+          "intrinsicWeight": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1,
+            "default": 0.3
+          },
+          "staleThreshold": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1,
+            "default": 0.3
+          },
+          "searchBoostMin": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1,
+            "default": 0.3
+          },
+          "importanceModulation": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 10,
+            "default": 1.5
+          },
+          "betaCore": {
+            "type": "number",
+            "minimum": 0.1,
+            "maximum": 5,
+            "default": 0.8
+          },
+          "betaWorking": {
+            "type": "number",
+            "minimum": 0.1,
+            "maximum": 5,
+            "default": 1.0
+          },
+          "betaPeripheral": {
+            "type": "number",
+            "minimum": 0.1,
+            "maximum": 5,
+            "default": 1.3
+          },
+          "coreDecayFloor": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1,
+            "default": 0.9
+          },
+          "workingDecayFloor": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1,
+            "default": 0.7
+          },
+          "peripheralDecayFloor": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1,
+            "default": 0.5
+          }
         }
       },
       "tier": {
         "type": "object",
         "additionalProperties": false,
         "properties": {
-          "coreAccessThreshold": { "type": "integer", "minimum": 1, "maximum": 1000, "default": 10 },
-          "coreCompositeThreshold": { "type": "number", "minimum": 0, "maximum": 1, "default": 0.7 },
-          "coreImportanceThreshold": { "type": "number", "minimum": 0, "maximum": 1, "default": 0.8 },
-          "peripheralCompositeThreshold": { "type": "number", "minimum": 0, "maximum": 1, "default": 0.15 },
-          "peripheralAgeDays": { "type": "integer", "minimum": 1, "maximum": 3650, "default": 60 },
-          "workingAccessThreshold": { "type": "integer", "minimum": 1, "maximum": 1000, "default": 3 },
-          "workingCompositeThreshold": { "type": "number", "minimum": 0, "maximum": 1, "default": 0.4 }
+          "coreAccessThreshold": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 1000,
+            "default": 10
+          },
+          "coreCompositeThreshold": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1,
+            "default": 0.7
+          },
+          "coreImportanceThreshold": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1,
+            "default": 0.8
+          },
+          "peripheralCompositeThreshold": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1,
+            "default": 0.15
+          },
+          "peripheralAgeDays": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 3650,
+            "default": 60
+          },
+          "workingAccessThreshold": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 1000,
+            "default": 3
+          },
+          "workingCompositeThreshold": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1,
+            "default": 0.4
+          }
         }
       },
       "sessionMemory": {
@@ -610,17 +765,18 @@
     "llm.apiKey": {
       "label": "LLM API Key",
       "sensitive": true,
-      "help": "API key for smart extraction LLM (defaults to embedding apiKey)",
-      "advanced": true
+      "placeholder": "sk-... or ${GROQ_API_KEY}",
+      "help": "API key for LLM used by smart memory extraction (defaults to embedding.apiKey if omitted)"
     },
     "llm.model": {
       "label": "LLM Model",
-      "help": "Model for memory extraction and dedup (default: gpt-4o-mini)",
-      "advanced": true
+      "placeholder": "openai/gpt-oss-120b",
+      "help": "OpenAI-compatible chat model for memory extraction/summary"
     },
     "llm.baseURL": {
       "label": "LLM Base URL",
-      "help": "Base URL for LLM API (defaults to embedding baseURL)",
+      "placeholder": "https://api.groq.com/openai/v1",
+      "help": "OpenAI-compatible base URL for LLM (defaults to embedding.baseURL if omitted)",
       "advanced": true
     },
     "extractMinMessages": {
@@ -946,23 +1102,6 @@
     "mdMirror.dir": {
       "label": "Mirror Fallback Directory",
       "help": "Fallback directory when agent workspace mapping is unavailable",
-      "advanced": true
-    },
-    "llm.apiKey": {
-      "label": "LLM API Key",
-      "sensitive": true,
-      "placeholder": "sk-... or ${GROQ_API_KEY}",
-      "help": "API key for LLM used by smart memory extraction (defaults to embedding.apiKey if omitted)"
-    },
-    "llm.model": {
-      "label": "LLM Model",
-      "placeholder": "openai/gpt-oss-120b",
-      "help": "OpenAI-compatible chat model for memory extraction/summary"
-    },
-    "llm.baseURL": {
-      "label": "LLM Base URL",
-      "placeholder": "https://api.groq.com/openai/v1",
-      "help": "OpenAI-compatible base URL for LLM (defaults to embedding.baseURL if omitted)",
       "advanced": true
     }
   }
