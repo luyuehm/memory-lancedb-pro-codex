@@ -1,5 +1,20 @@
 # Changelog
 
+## 1.1.0-beta.10 (Dreaming Compatibility Sync)
+
+This is a **beta** release published under the npm dist-tag **`beta`** (it does not affect the stable `latest` channel).
+
+Highlights:
+- **Feat**: add Dreaming compatibility module for short-term recall promotion, phase signals, and dream diary outputs
+- **Feat**: parse `dreaming` plugin config with defaults, cron frequency, timezone, storage mode, and phase thresholds
+- **Feat**: trigger dreaming sweeps on startup, scheduled cron slots, and after memory-reflection writes
+- **Feat**: expose `dreaming` config schema in `openclaw.plugin.json` for runtime validation and config tooling
+
+Notes:
+- This codex release ports the minimal Dreaming runtime path first, without yet syncing every standalone repo UI/documentation detail
+
+---
+
 ## 1.1.0-beta.9 (Codex Sync: scopes, boundary, OAuth)
 
 This is a **beta** release published under the npm dist-tag **`beta`** (it does not affect the stable `latest` channel).
