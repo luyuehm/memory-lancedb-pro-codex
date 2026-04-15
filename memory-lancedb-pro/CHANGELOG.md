@@ -1,5 +1,19 @@
 # Changelog
 
+## 1.1.0-beta.11 (Status Logging Noise Reduction)
+
+This is a **beta** release published under the npm dist-tag **`beta`** (it does not affect the stable `latest` channel).
+
+Highlights:
+- **Fix**: suppress non-essential startup info logs during OpenClaw status compatibility scans
+- **Fix**: keep `openclaw status --all` output clean while preserving normal plugin loading behavior
+- **Fix**: guard startup chatter behind `OPENCLAW_SUPPRESS_PLUGIN_STARTUP_INFO` for status-oriented scan paths
+
+Notes:
+- This beta focuses on output hygiene only; it does not change memory indexing, retrieval, smart extraction behavior, or runtime storage logic
+
+---
+
 ## 1.1.0-beta.10 (Dreaming Compatibility Sync)
 
 This is a **beta** release published under the npm dist-tag **`beta`** (it does not affect the stable `latest` channel).
