@@ -1750,7 +1750,7 @@ const memoryLanceDBProPlugin = {
           noiseBank,
         });
 
-        api.logger.info("memory-lancedb-pro: smart extraction enabled (LLM model: " + llmModel + ", noise bank: ON)");
+        if (process.env.OPENCLAW_SUPPRESS_PLUGIN_STARTUP_INFO !== "1") api.logger.info("memory-lancedb-pro: smart extraction enabled (LLM model: " + llmModel + ", noise bank: ON)");
       } catch (err) {
         api.logger.warn(`memory-lancedb-pro: smart extraction init failed, falling back to regex: ${String(err)}`);
       }
@@ -1998,10 +1998,10 @@ const memoryLanceDBProPlugin = {
     // Wire up the module-level debug logger for pure helper functions.
     _autoCaptureDebugLog = (msg: string) => api.logger.debug(msg);
 
-    api.logger.info(
+    if (process.env.OPENCLAW_SUPPRESS_PLUGIN_STARTUP_INFO !== "1") api.logger.info(
       `memory-lancedb-pro@${pluginVersion}: plugin registered (db: ${resolvedDbPath}, model: ${config.embedding.model || "text-embedding-3-small"}, smartExtraction: ${smartExtractor ? 'ON' : 'OFF'})`
     );
-    api.logger.info(`memory-lancedb-pro: diagnostic build tag loaded (${DIAG_BUILD_TAG})`);
+    if (process.env.OPENCLAW_SUPPRESS_PLUGIN_STARTUP_INFO !== "1") api.logger.info(`memory-lancedb-pro: diagnostic build tag loaded (${DIAG_BUILD_TAG})`);
 
     api.on("message_received", (event, ctx) => {
       const conversationKey = buildAutoCaptureConversationKeyFromIngress(
@@ -2623,7 +2623,7 @@ const memoryLanceDBProPlugin = {
         });
       }
 
-      api.logger.info("self-improvement: integrated hooks registered (agent:bootstrap, command:new, command:reset)");
+      if (process.env.OPENCLAW_SUPPRESS_PLUGIN_STARTUP_INFO !== "1") api.logger.info("self-improvement: integrated hooks registered (agent:bootstrap, command:new, command:reset)");
     }
 
     // ========================================================================
@@ -3168,7 +3168,7 @@ const memoryLanceDBProPlugin = {
       api.logger.info("session-memory: hook registered for command:new as memory-lancedb-pro-session-memory");
     }
     if (config.sessionStrategy === "none") {
-      api.logger.info("session-strategy: using none (plugin memory-reflection hooks disabled)");
+      if (process.env.OPENCLAW_SUPPRESS_PLUGIN_STARTUP_INFO !== "1") api.logger.info("session-strategy: using none (plugin memory-reflection hooks disabled)");
     }
 
     // ========================================================================
