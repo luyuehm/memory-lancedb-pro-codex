@@ -1,5 +1,11 @@
 # memory-lancedb-pro v1.1.0 — 智能记忆增强
 
+## v1.1.0-beta.12
+
+- docs: add legacy hook migration note for remaining `before_agent_start` usage
+- documents staged migration recommendation instead of warning-silencing one-shot changes
+
+
 > **日期**: 2026-03-03  
 > **作者**: CJY  
 > **概述**: 基于对 AI Agent 记忆系统的深入理解，对记忆的写入质量、生命周期管理和去重能力进行了全面改进与完善

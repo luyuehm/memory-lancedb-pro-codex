@@ -1,5 +1,11 @@
 # Changelog
 
+## v1.1.0-beta.12
+
+- docs: add legacy hook migration note for remaining `before_agent_start` usage
+- documents staged migration recommendation instead of warning-silencing one-shot changes
+
+
 ## 1.1.0-beta.11 (Status Logging Noise Reduction)
 
 This is a **beta** release published under the npm dist-tag **`beta`** (it does not affect the stable `latest` channel).
