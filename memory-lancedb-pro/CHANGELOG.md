@@ -1,5 +1,11 @@
 # Changelog
 
+## v1.1.0-beta.13
+
+- fix: stabilize backup path resolution for JSONL export into `~/.openclaw/memory/backups`
+- fix: validate runtime plugin `.ts` changes via jiti cache clear + active service log verification
+
+
 ## v1.1.0-beta.12
 
 - docs: add legacy hook migration note for remaining `before_agent_start` usage
