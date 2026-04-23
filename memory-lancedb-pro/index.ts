@@ -3129,9 +3129,7 @@ const memoryLanceDBProPlugin = {
 
     async function runBackup() {
       try {
-        const backupDir = api.resolvePath(
-          join(resolvedDbPath, "..", "backups"),
-        );
+        const backupDir = join(dirname(resolvedDbPath), "backups");
         await mkdir(backupDir, { recursive: true });
 
         const allMemories = await store.list(undefined, undefined, 10000, 0);
