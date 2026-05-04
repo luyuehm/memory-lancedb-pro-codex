@@ -2131,10 +2131,10 @@ const memoryLanceDBProPlugin = {
     // Lifecycle Hooks
     // ========================================================================
 
-    // Auto-recall: inject relevant memories before agent starts
+    // Auto-recall: inject relevant memories before prompt build
     // Default is OFF to prevent the model from accidentally echoing injected context.
     if (config.autoRecall === true) {
-      api.on("before_agent_start", async (event, ctx) => {
+      api.on("before_prompt_build", async (event, ctx) => {
         if (
           !event.prompt ||
           shouldSkipRetrieval(event.prompt, config.autoRecallMinLength)
@@ -2708,7 +2708,7 @@ const memoryLanceDBProPlugin = {
         }
       }, { priority: 15 });
 
-      api.on("before_agent_start", async (_event, ctx) => {
+      api.on("before_prompt_build", async (_event, ctx) => {
         const sessionKey = typeof ctx.sessionKey === "string" ? ctx.sessionKey : "";
         if (isInternalReflectionSessionKey(sessionKey)) return;
         if (reflectionInjectMode !== "inheritance-only" && reflectionInjectMode !== "inheritance+derived") return;
@@ -3060,7 +3060,7 @@ const memoryLanceDBProPlugin = {
         name: "memory-lancedb-pro.memory-reflection.command-reset",
         description: "Generate reflection log before /reset",
       });
-      api.logger.info("memory-reflection: integrated hooks registered (command:new, command:reset, after_tool_call, before_agent_start, before_prompt_build)");
+      api.logger.info("memory-reflection: integrated hooks registered (command:new, command:reset, after_tool_call, before_prompt_build)");
     }
 
     if (config.sessionStrategy === "systemSessionMemory") {
