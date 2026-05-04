@@ -220,8 +220,8 @@ describe("recall text cleanup", () => {
 
     memoryLanceDBProPlugin.register(harness.api);
 
-    const hooks = harness.eventHandlers.get("before_agent_start") || [];
-    assert.equal(hooks.length, 1, "expected exactly one before_agent_start hook for this config");
+    const hooks = harness.eventHandlers.get("before_prompt_build") || [];
+    assert.equal(hooks.length, 1, "expected exactly one before_prompt_build hook for this config");
     const [{ handler: autoRecallHook }] = hooks;
     assert.equal(typeof autoRecallHook, "function");
 
