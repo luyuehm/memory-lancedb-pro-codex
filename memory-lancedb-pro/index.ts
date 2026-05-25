@@ -1756,24 +1756,6 @@ const memoryLanceDBProPlugin = {
       }
     }
 
-    async function sleep(ms: number): Promise<void> {
-      await new Promise(resolve => setTimeout(resolve, ms));
-    }
-
-    async function retrieveWithRetry(params: {
-      query: string;
-      limit: number;
-      scopeFilter?: string[];
-      category?: string;
-    }) {
-      let results = await retriever.retrieve(params);
-      if (results.length === 0) {
-        await sleep(75);
-        results = await retriever.retrieve(params);
-      }
-      return results;
-    }
-
     async function runRecallLifecycle(
       results: Array<{ entry: { id: string; text: string; category: "preference" | "fact" | "decision" | "entity" | "other"; scope: string; importance: number; timestamp: number; metadata?: string } }>,
       scopeFilter: string[],
@@ -2138,7 +2120,7 @@ const memoryLanceDBProPlugin = {
           const agentId = resolveHookAgentId(ctx?.agentId, (event as any).sessionKey);
           const accessibleScopes = scopeManager.getAccessibleScopes(agentId);
 
-          const results = await retrieveWithRetry({
+          const results = await retriever.retrieve({
             query: event.prompt,
             limit: 3,
             scopeFilter: accessibleScopes,
@@ -2149,7 +2131,11 @@ const memoryLanceDBProPlugin = {
             return;
           }
 
-          const tierOverrides = await runRecallLifecycle(results, accessibleScopes);
+          // Fire lifecycle maintenance asynchronously — don't block the hook
+          runRecallLifecycle(results, accessibleScopes).catch((err) => {
+            api.logger.warn(`memory-lancedb-pro: lifecycle maintenance failed: ${String(err)}`);
+          });
+
           // Filter out redundant memories based on session history
           const minRepeated = config.autoRecallMinRepeated ?? 0;
 
@@ -2193,8 +2179,8 @@ const memoryLanceDBProPlugin = {
             .map((r) => {
               const metaObj = parseSmartMetadata(r.entry.metadata, r.entry);
               const displayCategory = metaObj.memory_category || r.entry.category;
-              const displayTier = tierOverrides.get(r.entry.id) || metaObj.tier || "";
-              const tierPrefix = displayTier ? `[${displayTier.charAt(0).toUpperCase()}]` : "";
+              const displayTier = "";
+              const tierPrefix = "";
               const abstract = metaObj.l0_abstract || r.entry.text;
               return `- ${tierPrefix}[${displayCategory}:${r.entry.scope}] ${sanitizeForContext(abstract)}`;
             })
