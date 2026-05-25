@@ -105,6 +105,20 @@
         "default": 0,
         "description": "Minimum number of turns before the same memory can be recalled again in the same session. Set to 0 to disable deduplication (default behavior: inject all memories)."
       },
+      "autoRecallMaxItems": {
+        "type": "integer",
+        "minimum": 1,
+        "maximum": 20,
+        "default": 3,
+        "description": "Maximum number of memories auto-injected per turn."
+      },
+      "autoRecallMaxChars": {
+        "type": "integer",
+        "minimum": 64,
+        "maximum": 8000,
+        "default": 600,
+        "description": "Maximum total character budget for auto-injected memory summaries."
+      },
       "captureAssistant": {
         "type": "boolean"
       },
