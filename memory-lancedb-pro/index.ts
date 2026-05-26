@@ -1637,6 +1637,11 @@ const pluginVersion = getPluginVersion();
 // Plugin Definition
 // ============================================================================
 
+/** Process-level guard: prevent re-registration when the framework calls
+ *  register() per-message (known gateway behavior). The flag resets only
+ *  on process restart, which is the correct lifecycle boundary. */
+let _pluginRegistered = false;
+
 const memoryLanceDBProPlugin = {
   id: "memory-lancedb-pro",
   name: "Memory (LanceDB Pro)",
@@ -1645,6 +1650,12 @@ const memoryLanceDBProPlugin = {
   kind: "memory" as const,
 
   register(api: OpenClawPluginApi) {
+    if (_pluginRegistered) {
+      api.logger.debug("memory-lancedb-pro: register() skipped (already registered in this process)");
+      return;
+    }
+    _pluginRegistered = true;
+
     // Parse and validate configuration
     const config = parsePluginConfig(api.pluginConfig);
 

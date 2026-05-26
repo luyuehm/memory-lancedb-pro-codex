@@ -2,8 +2,21 @@
   "id": "memory-lancedb-pro",
   "name": "Memory (LanceDB Pro)",
   "description": "Enhanced LanceDB-backed long-term memory with hybrid retrieval, multi-scope isolation, long-context chunking, and management CLI",
-  "version": "1.1.0-beta.15",
+  "version": "1.1.0-beta.16",
   "kind": "memory",
+  "contracts": {
+    "tools": [
+      "memory_health",
+      "memory_recall",
+      "memory_extract_and_store",
+      "memory_store",
+      "memory_update",
+      "memory_forget",
+      "memory_list",
+      "memory_stats",
+      "memory_search"
+    ]
+  },
   "configSchema": {
     "type": "object",
     "additionalProperties": false,
