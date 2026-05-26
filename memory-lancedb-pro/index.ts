@@ -109,6 +109,11 @@ interface PluginConfig {
     reinforcementFactor?: number;
     maxHalfLifeMultiplier?: number;
   };
+  optimize?: {
+    enabled?: boolean;
+    intervalWrites?: number;
+    deleteUnverified?: boolean;
+  };
   decay?: {
     recencyHalfLifeDays?: number;
     recencyWeight?: number;
@@ -1679,6 +1684,10 @@ const memoryLanceDBProPlugin = {
 
     // Initialize core components
     const store = new MemoryStore({ dbPath: resolvedDbPath, vectorDim });
+    const defaultOptimize = { enabled: true, intervalWrites: 50, deleteUnverified: true };
+    const optCfg = config.optimize === false ? { ...defaultOptimize, enabled: false }
+      : (config.optimize ? { ...defaultOptimize, ...config.optimize } : defaultOptimize);
+    store.setOptimizeConfig(optCfg);
     const embedder = createEmbedder({
       provider: "openai-compatible",
       apiKey: config.embedding.apiKey,
