@@ -7,9 +7,9 @@
     "baseURL": "https://api.openai.com/v1"
   },
   "llm": {
-    "apiKey": "${LLM_API_KEY}",
+    "apiKey": "${CPA_API_KEY}",
     "model": "${LLM_MODEL}",
-    "baseURL": "${LLM_BASE_URL}"
+    "baseURL": "http://127.0.0.1:8317/v1"
   },
   "retrieval": {
     "mode": "hybrid",
