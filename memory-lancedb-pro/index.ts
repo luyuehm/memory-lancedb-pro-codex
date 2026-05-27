@@ -109,6 +109,11 @@ interface PluginConfig {
     reinforcementFactor?: number;
     maxHalfLifeMultiplier?: number;
   };
+  optimize?: {
+    enabled?: boolean;
+    intervalWrites?: number;
+    deleteUnverified?: boolean;
+  };
   decay?: {
     recencyHalfLifeDays?: number;
     recencyWeight?: number;
@@ -1637,6 +1642,12 @@ const pluginVersion = getPluginVersion();
 // Plugin Definition
 // ============================================================================
 
+/** Process-level guard: prevent re-registration when the framework calls
+ *  register() per-message with the same api instance (known gateway behavior).
+ *  Tracks the api reference so that test scenarios with fresh mocks can
+ *  re-register with independent config/db paths. */
+let _registeredApi: object | null = null;
+
 const memoryLanceDBProPlugin = {
   id: "memory-lancedb-pro",
   name: "Memory (LanceDB Pro)",
@@ -1645,6 +1656,12 @@ const memoryLanceDBProPlugin = {
   kind: "memory" as const,
 
   register(api: OpenClawPluginApi) {
+    if (_registeredApi === api) {
+      api.logger.debug("memory-lancedb-pro: register() skipped (already registered for this api instance)");
+      return;
+    }
+    _registeredApi = api;
+
     // Parse and validate configuration
     const config = parsePluginConfig(api.pluginConfig);
 
@@ -1668,6 +1685,10 @@ const memoryLanceDBProPlugin = {
 
     // Initialize core components
     const store = new MemoryStore({ dbPath: resolvedDbPath, vectorDim });
+    const defaultOptimize = { enabled: true, intervalWrites: 50, deleteUnverified: true };
+    const optCfg = config.optimize === false ? { ...defaultOptimize, enabled: false }
+      : (config.optimize ? { ...defaultOptimize, ...config.optimize } : defaultOptimize);
+    store.setOptimizeConfig(optCfg);
     const embedder = createEmbedder({
       provider: "openai-compatible",
       apiKey: config.embedding.apiKey,
@@ -1754,24 +1775,6 @@ const memoryLanceDBProPlugin = {
       } catch (err) {
         api.logger.warn(`memory-lancedb-pro: smart extraction init failed, falling back to regex: ${String(err)}`);
       }
-    }
-
-    async function sleep(ms: number): Promise<void> {
-      await new Promise(resolve => setTimeout(resolve, ms));
-    }
-
-    async function retrieveWithRetry(params: {
-      query: string;
-      limit: number;
-      scopeFilter?: string[];
-      category?: string;
-    }) {
-      let results = await retriever.retrieve(params);
-      if (results.length === 0) {
-        await sleep(75);
-        results = await retriever.retrieve(params);
-      }
-      return results;
     }
 
     async function runRecallLifecycle(
@@ -2202,7 +2205,7 @@ const memoryLanceDBProPlugin = {
           const agentId = resolveHookAgentId(ctx?.agentId, (event as any).sessionKey);
           const accessibleScopes = scopeManager.getAccessibleScopes(agentId);
 
-          const results = await retrieveWithRetry({
+          const results = await retriever.retrieve({
             query: event.prompt,
             limit: 3,
             scopeFilter: accessibleScopes,
@@ -2213,7 +2216,11 @@ const memoryLanceDBProPlugin = {
             return;
           }
 
-          const tierOverrides = await runRecallLifecycle(results, accessibleScopes);
+          // Fire lifecycle maintenance asynchronously — don't block the hook
+          runRecallLifecycle(results, accessibleScopes).catch((err) => {
+            api.logger.warn(`memory-lancedb-pro: lifecycle maintenance failed: ${String(err)}`);
+          });
+
           // Filter out redundant memories based on session history
           const minRepeated = config.autoRecallMinRepeated ?? 0;
 
@@ -2257,8 +2264,8 @@ const memoryLanceDBProPlugin = {
             .map((r) => {
               const metaObj = parseSmartMetadata(r.entry.metadata, r.entry);
               const displayCategory = metaObj.memory_category || r.entry.category;
-              const displayTier = tierOverrides.get(r.entry.id) || metaObj.tier || "";
-              const tierPrefix = displayTier ? `[${displayTier.charAt(0).toUpperCase()}]` : "";
+              const displayTier = "";
+              const tierPrefix = "";
               const abstract = metaObj.l0_abstract || r.entry.text;
               return `- ${tierPrefix}[${displayCategory}:${r.entry.scope}] ${sanitizeForContext(abstract)}`;
             })

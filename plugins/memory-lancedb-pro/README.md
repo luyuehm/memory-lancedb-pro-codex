@@ -38,21 +38,24 @@ Copy `config.example.json` to `config.json` and replace the placeholders:
   "dbPath": "~/.openclaw/memory/lancedb-pro",
   "embedding": {
     "provider": "openai-compatible",
-    "apiKey": "${OPENAI_API_KEY}",
-    "model": "text-embedding-3-small",
-    "baseURL": "https://api.openai.com/v1"
+    "apiKey": "ollama-local",
+    "model": "mxbai-embed-large",
+    "baseURL": "http://localhost:11434/v1",
+    "dimensions": 1024
   },
   "llm": {
-    "apiKey": "${OPENAI_API_KEY}",
-    "model": "gpt-4.1-mini",
-    "baseURL": "https://api.openai.com/v1"
+    "apiKey": "${CPA_API_KEY}",
+    "model": "${LLM_MODEL}",
+    "baseURL": "http://127.0.0.1:8317/v1"
   },
   "retrieval": {
     "mode": "hybrid",
     "vectorWeight": 0.7,
     "bm25Weight": 0.3,
     "rerank": "none",
-    "candidatePoolSize": 12
+    "candidatePoolSize": 20,
+    "minScore": 0.3,
+    "hardMinScore": 0.35
   },
   "scopes": {
     "default": "global",
@@ -63,11 +66,34 @@ Copy `config.example.json` to `config.json` and replace the placeholders:
     },
     "agentAccess": {}
   },
-  "smartExtraction": true,
-  "extractMinMessages": 2,
-  "extractMaxChars": 8000
+  "smartExtraction": false,
+  "extractMinMessages": 12,
+  "extractMaxChars": 1200
 }
 ```
+
+## Environment Variables
+
+The config file supports `${VAR}` template resolution at runtime. The following variables are commonly used:
+
+| Variable | Description | Example |
+|---|---|---|
+| `CPA_API_KEY` | API key for the CPA proxy LLM endpoint | `sk-...` |
+| `LLM_MODEL` | LLM model served via the CPA proxy | `deepseek-ai/deepseek-v4-flash` |
+| `OPENAI_API_KEY` | OpenAI-compatible embedding API key (if not using Ollama) | `sk-...` |
+
+You can also override config fields via `MEMORY_LANCEDB_PRO_*` environment variables:
+
+| Env Variable | Overrides |
+|---|---|
+| `MEMORY_LANCEDB_PRO_CONFIG` | Full path to a config file (highest priority) |
+| `MEMORY_LANCEDB_PRO_DB_PATH` | `dbPath` |
+| `MEMORY_LANCEDB_PRO_EMBEDDING_API_KEY` | `embedding.apiKey` |
+| `MEMORY_LANCEDB_PRO_LLM_API_KEY` | `llm.apiKey` |
+| `MEMORY_LANCEDB_PRO_LLM_MODEL` | `llm.model` |
+| `MEMORY_LANCEDB_PRO_LLM_BASE_URL` | `llm.baseURL` |
+
+Set these before starting the MCP server. The runtime resolves them in `buildEnvConfig()`.
 
 ## Notes
 

@@ -10,6 +10,8 @@ import { AdmissionController, } from "./admission-control.js";
 import { ALWAYS_MERGE_CATEGORIES, MERGE_SUPPORTED_CATEGORIES, TEMPORAL_VERSIONED_CATEGORIES, normalizeCategory, } from "./memory-categories.js";
 import { isNoise } from "./noise-filter.js";
 import { appendRelation, buildSmartMetadata, deriveFactKey, parseSmartMetadata, parseSupportInfo, stringifySmartMetadata, updateSupportStats, } from "./smart-metadata.js";
+import { isUserMdExclusiveMemory, } from "./workspace-boundary.js";
+import { inferAtomicBrandItemPreferenceSlot } from "./preference-slots.js";
 // ============================================================================
 // Constants
 // ============================================================================
@@ -61,7 +63,7 @@ export class SmartExtractor {
      * Returns extraction statistics.
      */
     async extractAndPersist(conversationText, sessionKey = "unknown", options = {}) {
-        const stats = { created: 0, merged: 0, skipped: 0, rejected: 0 };
+        const stats = { created: 0, merged: 0, skipped: 0, rejected: 0, boundarySkipped: 0 };
         const targetScope = options.scope ?? this.config.defaultScope ?? "global";
         const scopeFilter = options.scopeFilter && options.scopeFilter.length > 0
             ? options.scopeFilter
@@ -77,6 +79,16 @@ export class SmartExtractor {
         this.log(`memory-pro: smart-extractor: extracted ${candidates.length} candidate(s)`);
         // Step 2: Process each candidate through dedup pipeline
         for (const candidate of candidates.slice(0, MAX_MEMORIES_PER_EXTRACTION)) {
+            if (isUserMdExclusiveMemory({
+                memoryCategory: candidate.category,
+                abstract: candidate.abstract,
+                content: candidate.content,
+            }, this.config.workspaceBoundary)) {
+                stats.skipped += 1;
+                stats.boundarySkipped = (stats.boundarySkipped ?? 0) + 1;
+                this.log(`memory-pro: smart-extractor: skipped USER.md-exclusive [${candidate.category}] ${candidate.abstract.slice(0, 60)}`);
+                continue;
+            }
             try {
                 await this.processCandidate(candidate, conversationText, sessionKey, stats, targetScope, scopeFilter);
             }
@@ -315,6 +327,21 @@ export class SmartExtractor {
             return { decision: "create", reason: "No similar memories found" };
         }
         const sameTurnToolMatch = this.findSameTurnMemoryStoreMatch(candidate, similar, sessionKey);
+        if (candidate.category === "preferences") {
+            const candidateSlot = inferAtomicBrandItemPreferenceSlot(candidate.content);
+            if (candidateSlot) {
+                const conflict = similar.find((r) => {
+                    const existingSlot = inferAtomicBrandItemPreferenceSlot(r.entry.text);
+                    return existingSlot && existingSlot.brand === candidateSlot.brand && existingSlot.item !== candidateSlot.item;
+                });
+                if (conflict) {
+                    return {
+                        decision: "create",
+                        reason: `Brand-item guard: ${candidateSlot.brand}/${candidateSlot.item} differs from ${conflict.entry.id}`,
+                    };
+                }
+            }
+        }
         if (sameTurnToolMatch) {
             return {
                 decision: "skip",

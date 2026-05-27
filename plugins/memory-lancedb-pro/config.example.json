@@ -7,9 +7,9 @@
     "baseURL": "https://api.openai.com/v1"
   },
   "llm": {
-    "apiKey": "${OPENAI_API_KEY}",
-    "model": "gpt-4.1-mini",
-    "baseURL": "https://api.openai.com/v1"
+    "apiKey": "${CPA_API_KEY}",
+    "model": "${LLM_MODEL}",
+    "baseURL": "http://127.0.0.1:8317/v1"
   },
   "retrieval": {
     "mode": "hybrid",

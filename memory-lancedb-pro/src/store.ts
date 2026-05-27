@@ -43,6 +43,13 @@ export interface MemorySearchResult {
 export interface StoreConfig {
   dbPath: string;
   vectorDim: number;
+  optimizeConfig?: OptimizeConfig;
+}
+
+export interface OptimizeConfig {
+  enabled: boolean;
+  intervalWrites: number;
+  deleteUnverified: boolean;
 }
 
 export interface MetadataPatch {
@@ -195,7 +202,17 @@ export class MemoryStore {
   private ftsIndexCreated = false;
   private updateQueue: Promise<void> = Promise.resolve();
 
-  constructor(private readonly config: StoreConfig) { }
+  /** Write counter for periodic LanceDB optimize() to prevent native memory bloat */
+  private writeCount = 0;
+
+  constructor(
+    private readonly config: StoreConfig,
+  ) { }
+
+  /** Configure periodic optimize after construction (called from plugin register()) */
+  setOptimizeConfig(opt: OptimizeConfig): void {
+    this.config.optimizeConfig = opt;
+  }
 
   get dbPath(): string {
     return this.config.dbPath;
@@ -355,6 +372,7 @@ export class MemoryStore {
         `Failed to store memory in "${this.config.dbPath}": ${code} ${message}`,
       );
     }
+    this.maybeOptimize();
     return fullEntry;
   }
 
@@ -388,6 +406,7 @@ export class MemoryStore {
     };
 
     await this.table!.add(asTableRows([full]));
+    this.maybeOptimize();
     return full;
   }
 
@@ -698,6 +717,7 @@ export class MemoryStore {
     }
 
     await this.table!.delete(`id = '${resolvedId}'`);
+    this.maybeOptimize();
     return true;
   }
 
@@ -922,6 +942,7 @@ export class MemoryStore {
         );
       }
 
+      this.maybeOptimize();
       return updated;
     });
   }
@@ -989,6 +1010,7 @@ export class MemoryStore {
     // Then delete
     if (deleteCount > 0) {
       await this.table!.delete(whereClause);
+      this.maybeOptimize();
     }
 
     return deleteCount;
@@ -996,6 +1018,34 @@ export class MemoryStore {
 
   get hasFtsSupport(): boolean {
     return this.ftsIndexCreated;
+  }
+
+  /**
+   * LanceDB VACUUM: compact files, prune old versions, optimize indices.
+   * Call periodically to prevent native memory bloat from version accumulation.
+   */
+  async optimize(options?: { cleanupOlderThan?: Date; deleteUnverified?: boolean }): Promise<void> {
+    await this.ensureInitialized();
+    const cleanupOlderThan = options?.cleanupOlderThan ?? new Date();
+    const deleteUnverified = options?.deleteUnverified ?? true;
+    await this.table!.optimize({ cleanupOlderThan, deleteUnverified });
+  }
+
+  /**
+   * Increment write counter and fire async optimize when threshold is reached.
+   * Fire-and-forget: does NOT block the write path.
+   */
+  private maybeOptimize(): void {
+    const optCfg = this.config.optimizeConfig;
+    if (!optCfg?.enabled) return;
+
+    this.writeCount++;
+    if (this.writeCount < (optCfg.intervalWrites || 50)) return;
+
+    this.writeCount = 0;
+    this.optimize({ deleteUnverified: optCfg.deleteUnverified ?? true })
+      .then(() => console.log(`memory-lancedb-pro: optimize completed (interval=${optCfg.intervalWrites}, deleteUnverified=${optCfg.deleteUnverified})`))
+      .catch((err) => console.warn(`memory-lancedb-pro: optimize failed: ${err instanceof Error ? err.message : String(err)}`));
   }
 
   /** Last FTS error for diagnostics */
