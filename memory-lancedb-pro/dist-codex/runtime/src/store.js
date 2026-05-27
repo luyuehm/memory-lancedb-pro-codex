@@ -124,8 +124,14 @@ export class MemoryStore {
     initPromise = null;
     ftsIndexCreated = false;
     updateQueue = Promise.resolve();
+    /** Write counter for periodic LanceDB optimize() to prevent native memory bloat */
+    writeCount = 0;
     constructor(config) {
         this.config = config;
+    }
+    /** Configure periodic optimize after construction (called from plugin register()) */
+    setOptimizeConfig(opt) {
+        this.config.optimizeConfig = opt;
     }
     get dbPath() {
         return this.config.dbPath;
@@ -257,6 +263,7 @@ export class MemoryStore {
             const message = err.message || String(err);
             throw new Error(`Failed to store memory in "${this.config.dbPath}": ${code} ${message}`);
         }
+        this.maybeOptimize();
         return fullEntry;
     }
     /**
@@ -283,6 +290,7 @@ export class MemoryStore {
             metadata: entry.metadata || "{}",
         };
         await this.table.add(asTableRows([full]));
+        this.maybeOptimize();
         return full;
     }
     async hasId(id) {
@@ -522,6 +530,7 @@ export class MemoryStore {
             throw new Error(`Memory ${resolvedId} is outside accessible scopes`);
         }
         await this.table.delete(`id = '${resolvedId}'`);
+        this.maybeOptimize();
         return true;
     }
     async list(scopeFilter, category, limit = 20, offset = 0) {
@@ -688,6 +697,7 @@ export class MemoryStore {
                 throw new Error(`Failed to update memory ${id}: write failed after delete, latest available record restored. ` +
                     `Write error: ${addError instanceof Error ? addError.message : String(addError)}`);
             }
+            this.maybeOptimize();
             return updated;
         });
     }
@@ -735,11 +745,38 @@ export class MemoryStore {
         // Then delete
         if (deleteCount > 0) {
             await this.table.delete(whereClause);
+            this.maybeOptimize();
         }
         return deleteCount;
     }
     get hasFtsSupport() {
         return this.ftsIndexCreated;
+    }
+    /**
+     * LanceDB VACUUM: compact files, prune old versions, optimize indices.
+     * Call periodically to prevent native memory bloat from version accumulation.
+     */
+    async optimize(options) {
+        await this.ensureInitialized();
+        const cleanupOlderThan = options?.cleanupOlderThan ?? new Date();
+        const deleteUnverified = options?.deleteUnverified ?? true;
+        await this.table.optimize({ cleanupOlderThan, deleteUnverified });
+    }
+    /**
+     * Increment write counter and fire async optimize when threshold is reached.
+     * Fire-and-forget: does NOT block the write path.
+     */
+    maybeOptimize() {
+        const optCfg = this.config.optimizeConfig;
+        if (!optCfg?.enabled)
+            return;
+        this.writeCount++;
+        if (this.writeCount < (optCfg.intervalWrites || 50))
+            return;
+        this.writeCount = 0;
+        this.optimize({ deleteUnverified: optCfg.deleteUnverified ?? true })
+            .then(() => console.log(`memory-lancedb-pro: optimize completed (interval=${optCfg.intervalWrites}, deleteUnverified=${optCfg.deleteUnverified})`))
+            .catch((err) => console.warn(`memory-lancedb-pro: optimize failed: ${err instanceof Error ? err.message : String(err)}`));
     }
     /** Last FTS error for diagnostics */
     _lastFtsError = null;
