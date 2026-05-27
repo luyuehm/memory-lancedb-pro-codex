@@ -73,6 +73,7 @@ export type ExtractionStats = {
   rejected?: number; // admission-control rejections before persistence
   supported?: number; // context-aware support count
   superseded?: number; // temporal fact replacements
+  boundarySkipped?: number; // messages filtered by session boundary
 };
 
 /** Validate and normalize a category string. */
