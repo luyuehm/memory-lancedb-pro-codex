@@ -76,15 +76,16 @@ Copy the example config:
 cp plugins/memory-lancedb-pro/config.example.json plugins/memory-lancedb-pro/config.json
 ```
 
-Then fill in:
+Then set environment variables for the LLM configuration (the config file references them via `${VAR}` templates):
 
-- `embedding.apiKey`
-- `embedding.model`
-- `embedding.baseURL`
-- `llm.apiKey`
-- `llm.model`
-- `llm.baseURL`
-- optional rerank settings under `retrieval`
+```bash
+export CPA_API_KEY="sk-..."     # API key for the LLM endpoint
+export LLM_MODEL="deepseek-ai/deepseek-v4-flash"  # or your preferred model
+```
+
+These variables are resolved at runtime. The embedding section in `config.json` uses an Ollama-local embedding model by default (`mxbai-embed-large` on `http://localhost:11434/v1`), so no additional env vars are needed for embeddings unless you change the provider.
+
+If you prefer, you can also override config values via `MEMORY_LANCEDB_PRO_*` environment variables (e.g., `MEMORY_LANCEDB_PRO_DB_PATH`).
 
 The live config file is intentionally excluded from git.
 
