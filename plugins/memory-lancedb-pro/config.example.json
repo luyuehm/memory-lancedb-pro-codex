@@ -8,8 +8,8 @@
   },
   "llm": {
     "apiKey": "${CPA_API_KEY}",
-    "model": "deepseek-v4-flash",
-    "baseURL": "http://127.0.0.1:8317/v1"
+    "model": "${LLM_MODEL}",
+    "baseURL": "${LLM_BASE_URL}"
   },
   "retrieval": {
     "mode": "hybrid",

@@ -76,15 +76,17 @@ Copy the example config:
 cp plugins/memory-lancedb-pro/config.example.json plugins/memory-lancedb-pro/config.json
 ```
 
-Then set the API key for the LLM configuration (the config file references it via `${CPA_API_KEY}`):
+Then ensure the required environment variables are set. Create or edit `~/.openclaw/.env` (auto-loaded by the MCP server):
 
 ```bash
-export CPA_API_KEY="sk-..."     # API key for the LLM endpoint
+LLM_MODEL=deepseek-v4-flash
+LLM_BASE_URL=http://127.0.0.1:8317/v1
+CPA_API_KEY=sk-...
 ```
 
-These variables are resolved at runtime. The embedding section in `config.json` uses an Ollama-local embedding model by default (`mxbai-embed-large` on `http://localhost:11434/v1`), so no additional env vars are needed for embeddings unless you change the provider.
+These `${VAR}` templates are resolved at runtime. The MCP server auto-loads `~/.openclaw/.env` on startup. The embedding section uses an Ollama-local model by default (`mxbai-embed-large` on `http://localhost:11434/v1`), so no additional env vars are needed for embeddings unless you change the provider.
 
-If you prefer, you can also override config values via `MEMORY_LANCEDB_PRO_*` environment variables (e.g., `MEMORY_LANCEDB_PRO_DB_PATH`).
+You can also override config values via `MEMORY_LANCEDB_PRO_*` environment variables (e.g., `MEMORY_LANCEDB_PRO_DB_PATH`).
 
 The live config file is intentionally excluded from git.
 

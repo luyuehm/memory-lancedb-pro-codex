@@ -79,6 +79,8 @@ The config file supports `${VAR}` template resolution at runtime. The following 
 | Variable | Description | Example |
 |---|---|---|
 | `CPA_API_KEY` | API key for the CPA proxy LLM endpoint | `sk-...` |
+| `LLM_MODEL` | LLM model served via the CPA proxy | `deepseek-v4-flash` |
+| `LLM_BASE_URL` | LLM endpoint base URL | `http://127.0.0.1:8317/v1` |
 | `OPENAI_API_KEY` | OpenAI-compatible embedding API key (if not using Ollama) | `sk-...` |
 
 You can also override config fields via `MEMORY_LANCEDB_PRO_*` environment variables:
@@ -92,7 +94,18 @@ You can also override config fields via `MEMORY_LANCEDB_PRO_*` environment varia
 | `MEMORY_LANCEDB_PRO_LLM_MODEL` | `llm.model` |
 | `MEMORY_LANCEDB_PRO_LLM_BASE_URL` | `llm.baseURL` |
 
-The LLM model is hardcoded to `deepseek-v4-flash` in the config (tested with CPA proxy OpenAI-compatible endpoint). To use a different model, update the `llm.model` field directly or set `MEMORY_LANCEDB_PRO_LLM_MODEL`.
+### .env auto-loading
+
+The MCP server auto-loads `~/.openclaw/.env` at startup. Set variables in that file:
+
+```bash
+# ~/.openclaw/.env
+LLM_MODEL=deepseek-v4-flash
+LLM_BASE_URL=http://127.0.0.1:8317/v1
+CPA_API_KEY=sk-...
+```
+
+Variables already present in `process.env` (e.g. set by a wrapper script) take priority over `.env` values.
 
 Set these before starting the MCP server. The runtime resolves them in `buildEnvConfig()`.
 
