@@ -45,7 +45,7 @@ Copy `config.example.json` to `config.json` and replace the placeholders:
   },
   "llm": {
     "apiKey": "${CPA_API_KEY}",
-    "model": "deepseek-ai/DeepSeek-V4-Flash",
+    "model": "deepseek-v4-flash",
     "baseURL": "http://127.0.0.1:8317/v1"
   },
   "retrieval": {
@@ -92,7 +92,7 @@ You can also override config fields via `MEMORY_LANCEDB_PRO_*` environment varia
 | `MEMORY_LANCEDB_PRO_LLM_MODEL` | `llm.model` |
 | `MEMORY_LANCEDB_PRO_LLM_BASE_URL` | `llm.baseURL` |
 
-The LLM model is hardcoded to `deepseek-ai/DeepSeek-V4-Flash` in the config (tested with CPA proxy OpenAI-compatible endpoint). To use a different model, update the `llm.model` field directly or set `MEMORY_LANCEDB_PRO_LLM_MODEL`.
+The LLM model is hardcoded to `deepseek-v4-flash` in the config (tested with CPA proxy OpenAI-compatible endpoint). To use a different model, update the `llm.model` field directly or set `MEMORY_LANCEDB_PRO_LLM_MODEL`.
 
 Set these before starting the MCP server. The runtime resolves them in `buildEnvConfig()`.
 
