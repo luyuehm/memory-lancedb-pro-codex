@@ -45,7 +45,7 @@ Copy `config.example.json` to `config.json` and replace the placeholders:
   },
   "llm": {
     "apiKey": "${CPA_API_KEY}",
-    "model": "${LLM_MODEL}",
+    "model": "deepseek-ai/DeepSeek-V4-Flash",
     "baseURL": "http://127.0.0.1:8317/v1"
   },
   "retrieval": {
@@ -66,9 +66,9 @@ Copy `config.example.json` to `config.json` and replace the placeholders:
     },
     "agentAccess": {}
   },
-  "smartExtraction": false,
-  "extractMinMessages": 12,
-  "extractMaxChars": 1200
+  "smartExtraction": true,
+  "extractMinMessages": 4,
+  "extractMaxChars": 4000
 }
 ```
 
@@ -79,7 +79,6 @@ The config file supports `${VAR}` template resolution at runtime. The following 
 | Variable | Description | Example |
 |---|---|---|
 | `CPA_API_KEY` | API key for the CPA proxy LLM endpoint | `sk-...` |
-| `LLM_MODEL` | LLM model served via the CPA proxy | `deepseek-ai/deepseek-v4-flash` |
 | `OPENAI_API_KEY` | OpenAI-compatible embedding API key (if not using Ollama) | `sk-...` |
 
 You can also override config fields via `MEMORY_LANCEDB_PRO_*` environment variables:
@@ -92,6 +91,8 @@ You can also override config fields via `MEMORY_LANCEDB_PRO_*` environment varia
 | `MEMORY_LANCEDB_PRO_LLM_API_KEY` | `llm.apiKey` |
 | `MEMORY_LANCEDB_PRO_LLM_MODEL` | `llm.model` |
 | `MEMORY_LANCEDB_PRO_LLM_BASE_URL` | `llm.baseURL` |
+
+The LLM model is hardcoded to `deepseek-ai/DeepSeek-V4-Flash` in the config (tested with CPA proxy OpenAI-compatible endpoint). To use a different model, update the `llm.model` field directly or set `MEMORY_LANCEDB_PRO_LLM_MODEL`.
 
 Set these before starting the MCP server. The runtime resolves them in `buildEnvConfig()`.
 

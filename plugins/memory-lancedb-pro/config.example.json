@@ -8,7 +8,7 @@
   },
   "llm": {
     "apiKey": "${CPA_API_KEY}",
-    "model": "${LLM_MODEL}",
+    "model": "deepseek-ai/DeepSeek-V4-Flash",
     "baseURL": "http://127.0.0.1:8317/v1"
   },
   "retrieval": {
