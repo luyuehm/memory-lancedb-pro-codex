@@ -30,11 +30,15 @@ function createMockApi(pluginConfig, options = {}) {
     pluginConfig,
     hooks: {},
     toolFactories: {},
+    memoryCapability: null,
     logger: {
       info() {},
       warn() {},
       error() {},
       debug() {},
+    },
+    registerMemoryCapability(capability) {
+      this.memoryCapability = capability;
     },
     resolvePath(value) {
       return value;
@@ -122,6 +126,34 @@ try {
   assert.equal(services.length, 1, "plugin should register its background service");
   assert.equal(typeof api.hooks.agent_end, "function", "autoCapture should remain enabled by default");
   assert.equal(api.hooks["command:new"], undefined, "sessionMemory should stay disabled by default");
+  assert.ok(
+    api.memoryCapability && api.memoryCapability.runtime,
+    "plugin should register a memory capability with a Core Status Provider runtime",
+  );
+  assert.equal(
+    api.memoryCapability.backend,
+    "lancedb-pro",
+    "memory capability backend should be lancedb-pro",
+  );
+  const memoryManager = await api.memoryCapability.runtime.getMemorySearchManager({
+    agentId: "main",
+    purpose: "status",
+    inspectSources: true,
+  });
+  assert.ok(memoryManager.manager, "memory runtime should return a manager for status probing");
+  const managerStatus = memoryManager.manager.status();
+  assert.equal(
+    managerStatus.backend,
+    "lancedb-pro",
+    "manager.status().backend should be lancedb-pro",
+  );
+  assert.equal(typeof managerStatus.files, "number", "manager.status().files should be a number");
+  assert.equal(typeof managerStatus.chunks, "number", "manager.status().chunks should be a number");
+  assert.ok(
+    managerStatus.vector && managerStatus.vector.enabled,
+    "manager.status().vector should report the vector backend",
+  );
+  await memoryManager.manager.close?.();
   await assert.doesNotReject(
     services[0].stop(),
     "service stop should not throw when no access tracker is configured",

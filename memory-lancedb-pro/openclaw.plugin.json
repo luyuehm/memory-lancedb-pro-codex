@@ -757,7 +757,9 @@
         "additionalProperties": false,
         "properties": {
           "enabled": {
-            "type": "boolean"
+            "type": "boolean",
+            "default": false,
+            "description": "Master toggle for the plugin's own dreaming sweeps. MUST remain false unless a dedicated dreaming phase is desired — when absent the OpenClaw host treats memory dreaming as enabled and loads the builtin memory-core plugin as a dreaming sidecar, which shadows this plugin's Core Status Provider and makes openclaw status/memory status resolve the builtin backend."
           },
           "frequency": {
             "type": "string"

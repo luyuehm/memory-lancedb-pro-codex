@@ -2006,68 +2006,186 @@ const memoryLanceDBProPlugin = {
     );
     if (process.env.OPENCLAW_SUPPRESS_PLUGIN_STARTUP_INFO !== "1") api.logger.info(`memory-lancedb-pro: diagnostic build tag loaded (${DIAG_BUILD_TAG})`);
 
+    // ========================================================================
+    // Core Status Provider / Memory Search Manager
+    // ========================================================================
+    // The host (`openclaw status`, `memory.search`, recall) resolves the
+    // configured memory slot through `capability.runtime.getMemorySearchManager`
+    // and calls `status()`, `probeVectorAvailability()`, and `close()` on the
+    // returned manager. `status()` is synchronous, so LanceDB table statistics
+    // (files/chunks) are read lazily into a cached snapshot by refreshStatusStats()
+    // which the status path triggers before rendering — while still returning an
+    // instant, correct-shape status to the CLI even before the async read lands.
+
+    let cachedStatusStats: {
+      files: number;
+      chunks: number;
+      scopes: Array<{ scope: string; files: number; chunks: number }>;
+      ftsAvailable: boolean;
+      lastSyncMs: number;
+      error?: string;
+    } | null = null;
+
+    async function refreshStatusStats(): Promise<void> {
+      try {
+        await store.ensureReady();
+        const stats = await store.stats();
+        cachedStatusStats = {
+          files: stats.totalCount,
+          chunks: stats.totalCount,
+          scopes: Object.entries(stats.scopeCounts).map(([scope, count]) => ({
+            scope,
+            files: count,
+            chunks: count,
+          })),
+          ftsAvailable: store.hasFtsSupport,
+          lastSyncMs: Date.now(),
+        };
+      } catch (err) {
+        cachedStatusStats = {
+          files: 0,
+          chunks: 0,
+          scopes: [],
+          ftsAvailable: store.hasFtsSupport,
+          lastSyncMs: Date.now(),
+          error: err instanceof Error ? err.message : String(err),
+        };
+        api.logger.debug(`memory-lancedb-pro: status stats refresh failed: ${String(err)}`);
+      }
+    }
+
+    function buildMemoryProviderStatus() {
+      const stats = cachedStatusStats ?? {
+        files: 0,
+        chunks: 0,
+        scopes: [],
+        ftsAvailable: store.hasFtsSupport,
+        lastSyncMs: 0,
+      };
+      return {
+        backend: "lancedb-pro",
+        provider: config.embedding.provider,
+        requestedProvider: config.embedding.provider,
+        model: config.embedding.model || "text-embedding-3-small",
+        files: stats.files,
+        chunks: stats.chunks,
+        dirty: false,
+        workspaceDir: getDefaultWorkspaceDir(),
+        dbPath: resolvedDbPath,
+        sources: ["memory" as const],
+        sourceCounts: stats.scopes.map((entry) => ({
+          source: "memory" as const,
+          files: entry.files,
+          chunks: entry.chunks,
+          ...(entry.scope !== "global" ? { issues: [`scope=${entry.scope}`] } : {}),
+        })),
+        cache: {
+          enabled: true,
+          entries: embedder.cacheStats?.size ?? 0,
+        },
+        fts: {
+          enabled: stats.ftsAvailable,
+          available: stats.ftsAvailable,
+          ...(stats.error ? { error: stats.error } : {}),
+        },
+        vector: {
+          enabled: true,
+          available: true,
+          dims: vectorDim,
+        },
+      };
+    }
+
     const memoryRuntime = {
       resolveMemoryBackendConfig: () => ({
         backend: "lancedb-pro",
         citations: false,
         lancedbPro: { dbPath: resolvedDbPath },
       }),
-      getMemorySearchManager: async () => ({
-        manager: {
-          async search(query: string, opts?: { maxResults?: number; limit?: number }) {
-            const limit = Math.max(1, Math.min(20, Number(opts?.maxResults ?? opts?.limit ?? 5) || 5));
-            const results = await retriever.retrieve({ query, limit } as any);
-            return results.map((r) => ({
-              path: `memory://${r.entry.id}`,
-              title: `[${r.entry.category}:${r.entry.scope}] ${r.entry.text.slice(0, 80)}`,
-              snippet: r.entry.text,
-              score: r.score,
-              metadata: {
-                id: r.entry.id,
-                category: r.entry.category,
-                scope: r.entry.scope,
+      getMemorySearchManager: async (params?: { purpose?: "default" | "status" | "cli"; inspectSources?: boolean }) => {
+        // The CLI status scan requests a read-only source freshness check.
+        // Refresh the cached stats so the synchronous `status()` below shows
+        // real files/chunks. Bound the await so a slow LanceDB open or an
+        // unavailable backend can never hang the status scan.
+        if (params?.purpose === "status" || params?.inspectSources) {
+          await Promise.race([
+            refreshStatusStats(),
+            new Promise((resolve) => setTimeout(resolve, 5000)),
+          ]);
+        }
+        return {
+          manager: {
+            async search(query: string, opts?: { maxResults?: number; limit?: number }) {
+              const limit = Math.max(1, Math.min(20, Number(opts?.maxResults ?? opts?.limit ?? 5) || 5));
+              const results = await retriever.retrieve({ query, limit } as any);
+              return results.map((r) => ({
+                path: `memory://${r.entry.id}`,
+                startLine: 1,
+                endLine: 1,
+                snippet: r.entry.text,
+                score: r.score,
+                source: "memory" as const,
                 importance: r.entry.importance,
-                timestamp: r.entry.timestamp,
-              },
-            }));
+                provenance: {
+                  originClass: "agent" as const,
+                  sessionKind: "interactive" as const,
+                  observedAt: r.entry.timestamp,
+                },
+              }));
+            },
+            async probeVectorAvailability() {
+              const result = await retriever.test();
+              return result.success;
+            },
+            async probeEmbeddingAvailability() {
+              const result = await embedder.test();
+              return { ok: result.success, error: result.success ? undefined : result.error };
+            },
+            async readFile(params: { relPath: string; from?: number; lines?: number }) {
+              const id = params.relPath.replace(/^memory:\/\//, "");
+              const entry = await store.getById(id);
+              if (!entry) {
+                return { status: "not_found" as const, text: "", path: params.relPath };
+              }
+              const fullText = entry.text + (entry.metadata && entry.metadata !== "{}" ? `\n${entry.metadata}` : "");
+              const from = params.from ?? 1;
+              const lines = params.lines ?? 250;
+              const sliced = fullText.split("\n").slice(from - 1, from - 1 + lines);
+              return {
+                status: "ok" as const,
+                text: sliced.join("\n"),
+                path: params.relPath,
+                from,
+                lines: sliced.length,
+                nextFrom: from + sliced.length,
+              };
+            },
+            status() {
+              // Warm the cached stats when the status path constructs a manager;
+              // covered below, also triggered by the status-scan getMemorySearchManager call.
+              return buildMemoryProviderStatus();
+            },
+            async close() {},
           },
-          async probeVectorAvailability() {
-            const result = await retriever.test();
-            return result.success;
+          debug: {
+            backend: "lancedb-pro" as const,
+            purpose: params?.purpose ?? "default",
           },
-          async probeEmbeddingAvailability() {
-            const result = await embedder.test();
-            return { ok: result.success, error: result.success ? undefined : result.error };
-          },
-          status() {
-            return {
-              backend: "lancedb-pro",
-              provider: config.embedding.provider,
-              requestedProvider: config.embedding.provider,
-              model: config.embedding.model || "text-embedding-3-small",
-              files: 0,
-              chunks: 0,
-              dirty: false,
-              workspaceDir: getDefaultWorkspaceDir(),
-              dbPath: resolvedDbPath,
-              sources: ["lancedb-pro"],
-              sourceCounts: {},
-              vector: { enabled: true, available: true },
-              batch: { enabled: false, failures: 0, limit: 0, wait: false, concurrency: 0, pollIntervalMs: 0, timeoutMs: 0 },
-              custom: { lancedbPro: { mode: config.retrieval.mode || "hybrid", fts: true } },
-            };
-          },
-          async close() {},
-        },
-      }),
+        };
+      },
       async closeAllMemorySearchManagers() {},
     };
 
-    (api as any).registerMemoryRuntime?.(memoryRuntime);
+    // Register the memory capability with its runtime so the host can resolve
+    // this slot via `capability.runtime.getMemorySearchManager`. The host API
+    // only exposes `registerMemoryCapability` (a non-exclusive additive
+    // onboarding of the runtime — previously `registerMemoryRuntime` was a
+    // silent no-op, which is why `openclaw status` fell back to "not checked").
     (api as any).registerMemoryCapability?.({
       id: "memory-lancedb-pro",
       name: "Memory LanceDB Pro",
       backend: "lancedb-pro",
+      runtime: memoryRuntime,
     });
 
     api.on("message_received", (event, ctx) => {
